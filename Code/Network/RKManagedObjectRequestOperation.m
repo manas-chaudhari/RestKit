@@ -130,6 +130,22 @@ static NSManagedObject *RKRefetchManagedObjectInContext(NSManagedObject *managed
     }
     NSError *error = nil;
     NSManagedObject *refetchedObject = [managedObjectContext existingObjectWithID:managedObjectID error:&error];
+    
+    if (refetchedObject) {
+        // Copy transient attribute values
+        NSEntityDescription *entity = [managedObject entity];
+        
+        for (NSString *key in entity.attributesByName) {
+            NSAttributeDescription *attribute = [entity.attributesByName objectForKey:key];
+            if (attribute.isTransient) {
+                id value = [managedObject valueForKey:key];
+                if (value) {
+                    [refetchedObject setValue:value forKey:key];
+                }
+            }
+        }
+    }
+    
     if (! refetchedObject) {
         RKLogWarning(@"Failed to refetch managed object with ID %@: %@", managedObjectID, error);
     }
